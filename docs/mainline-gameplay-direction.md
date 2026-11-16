@@ -33,13 +33,13 @@
 
 ## 阶段 0：可玩 Demo 规格门禁
 
-已整理[首个可玩 Demo 的 GDD](../GDD.md)、[TECH 技术规格](../TECH.md)与[验收清单](../ACCEPTANCE.md)。Chris 已确认 GDD 的“每 10 秒体验承诺”、首个内部可分享浏览器 Demo 技术基线，以及折锋谷／阿禾四节点、失败损失和验收范围。Web 需支持 WebAssembly／WebGL 2.0，Playwright 仅作必需的浏览器 E2E 测试工具，不随游戏打包；需尽早做移动浏览器 smoke test。技术批准不是最终发行平台承诺。**阶段 0 决策门禁已通过，文档包复核通过；阶段 1 尚未开始。**
+已整理[首个可玩 Demo 的 GDD](../GDD.md)、[TECH 技术规格](../TECH.md)与[验收清单](../ACCEPTANCE.md)。Chris 已确认 GDD 的“每 10 秒体验承诺”、首个内部可分享浏览器 Demo 技术基线，以及折锋谷／阿禾四节点、失败损失和验收范围。Web 需支持 WebAssembly／WebGL 2.0，Playwright 仅作必需的浏览器 E2E 测试工具，不随游戏打包；需尽早做移动浏览器 smoke test。技术批准不是最终发行平台承诺。**阶段 0 决策门禁已通过；阶段 1 技术脚手架及验证已完成，但不是 playable Demo，且不需要 Chris 试玩空白场景；首个可玩版本待核心循环完成后交 Chris 验收。**
 
 阶段 0 的整理记录见[2026-11-15 历史记录](../history/2026-11-15.md)。
 
 ## 已确认的开发引擎方向
 
-制作人已明确选择 **Godot** 作为开发引擎，并批准 Godot 4.7.2-stable 标准版／GDScript、Compatibility 与 Godot Web 作为首个内部可分享浏览器 Demo 基线。该决定不代表最终发行平台、正式浏览器／设备支持矩阵或其他实现架构已定；阶段 0 文档复核已通过；阶段 1 尚未开始。
+制作人已明确选择 **Godot** 作为开发引擎，并批准 Godot 4.7.2-stable 标准版／GDScript、Compatibility 与 Godot Web 作为首个内部可分享浏览器 Demo 基线。该决定不代表最终发行平台、正式浏览器／设备支持矩阵或其他实现架构已定；阶段 0 文档复核已通过；阶段 1 技术脚手架与验证已完成。
 
 ## 提案细节与当前边界
 
