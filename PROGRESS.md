@@ -17,7 +17,7 @@
 | Chromium 加载 | Chrome 151.0.7922.34（headless）；页面加载完成，WebAssembly 与 WebGL 2.0 可用，并创建一个画布 |
 | 浏览器 console | Console errors 0、未捕获异常 0、资源加载失败 0 |
 
-Chromium 在此云端 headless 环境自动使用 SwiftShader 软件 WebGL；此结果不代表真实 GPU 性能，也不定义浏览器支持矩阵。Playwright E2E 仍由 QA 后续单独验收。阶段 1 原始验证材料保存在仓库外的 `../game-design-wiki-stage1-evidence/`；本轮阶段 2 材料另存于 `../game-design-wiki-evidence/`。
+Chromium 在此云端 headless 环境自动使用 SwiftShader 软件 WebGL；此结果不代表真实 GPU 性能，也不定义浏览器支持矩阵。Playwright E2E 仍由 QA 后续单独验收。阶段 1 原始验证材料保存在仓库外的 `../game-design-wiki-stage1-evidence/`；阶段 2 材料另存于 `../game-design-wiki-evidence/`。
 
 阶段 1 只验收技术脚手架证据；不代表玩法功能、核心循环或首个可玩版本已完成。首个可玩版本须按 [`ACCEPTANCE.md`](ACCEPTANCE.md) 的 AC-01 至 AC-07 完成后交 Chris 验收；已批准的玩法边界保持不变。
 
@@ -35,11 +35,11 @@ Chromium 在此云端 headless 环境自动使用 SwiftShader 软件 WebGL；此
 
 本地工作副本中已有可见时机轨道、单次主动落锤、确定性反馈和手动重试的初步实现；相关 `scenes/main.tscn` 与 `scripts/forge_trial.gd` 尚未提交或推送，按任务卡要求不纳入本次文档同步。
 
-Godot 4.7.2 headless 导入／运行和 Godot Web 导出日志通过。Chromium 可启动 WebGL 2.0，当前 console 错误为空；但截图显示中文字符呈缺字方框，Godot Web 不支持当前尝试的 `SystemFont` 回退。现有浏览器日志只有计时结束后的“偏晚”结果，尚无命中与偏早／偏晚实际交互证据；清晰可读的反馈、console 复核和 QA 验收尚未完成。T2-01 所有局部验收项仍未勾选，不能记为通过。
+Godot 4.7.2 headless 导入／运行和 Godot Web 导出日志通过。Chromium 可启动 WebGL 2.0，初次浏览器记录的 console 错误为空；但截图显示中文字符呈缺字方框，Godot Web 不支持当前尝试的 `SystemFont` 回退。现有浏览器日志只有计时结束后的“偏晚”结果，尚无命中与偏早／偏晚实际交互证据；清晰可读的反馈、console 复核和 QA 验收尚未完成。T2-01 所有局部验收项仍未勾选，不能记为通过。
 
 ### 待决策与下次检查点
 
 - **待决定：** 是否在原型中加入最小中文字体子集资源。尚未批准或加入；选定前需核查许可证与包体影响。
 - **待明确：** T2-01 是否在完整核心循环前给 Chris 作探索性预览。正式首个可玩版本验收仍在核心循环完成后进行；不得把该单维原型视作完整验收。
-- **当前 ETA：** 2026-11-16 23:30（香港时间）；若等待字体资源决定影响进度，执行方需更新 ETA 或下次检查点。
-- **下次检查点：** 收到决定后按决定修复或记录阻塞；再验证可读反馈、命中与偏早／偏晚的实际交互、Chromium console，并补截图和完整交付清单。
+- **ETA 跟进：** 原记录 ETA 为 2026-11-16 23:30（香港时间），现已逾期。检查至 2026-11-17 09:06，项目文件、代码与证据目录均没有后续状态或验证更新，也未记录新的 ETA；需尽快确认阻塞并取得新 ETA／下一检查点。
+- **下次检查点：** 收到字体资源决定与最新阻塞／ETA 后按决定处理；再验证可读反馈、命中与偏早／偏晚的实际交互、Chromium console，并补截图和完整交付清单。
