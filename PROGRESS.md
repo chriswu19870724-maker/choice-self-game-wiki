@@ -33,11 +33,15 @@ Chromium 在此云端 headless 环境自动使用 SwiftShader 软件 WebGL；此
 
 ### T2-01 当前进展
 
-本地工作副本已实现可见时机轨道、每轮一次主动落锤、确定性即时反馈和手动重试。未加入剑属性、历练结果或其他系统；代码尚未提交、推送或发布。
+Godot Dev 已于 2026-11-17 13:15（香港时间）完成 T2-01 本地自测；QA 于 2026-11-18 01:53（香港时间）用 Chromium 151／Playwright 独立局部验收通过。QA 复测：`3.427 s` 命中、`2.024 s` 偏早、`4.596 s` 偏晚、`6 s` 超时，以及重复输入拦截和重试复位；在 `1280×800` 下中文与窗口可读，console error、页面异常、失败请求均为 0。精确命中窗边界仅经代码审阅，未做毫秒级黑盒点击。
+
+T2-01 尚未提交、推送或发布，不单独交 Chris 试玩；Chris 验收留待完整核心循环后的首个可玩版本。
+
+本地工作副本实现可见时机轨道、每轮一次主动落锤、确定性即时反馈和手动重试。未加入剑属性、历练结果或其他系统。
 
 Godot `4.7.2.stable.official.ed1daf0bf` Headless Editor 导入、主场景运行和 Web Debug 导出均退出码 0；Chromium `151.0.7922.34`（headless，1280×800）成功启动 Godot WebGL 2.0。DevTools Protocol 监听 `Runtime`、`Log` 与 `Network` 事件；console errors、未捕获异常和资源加载失败均为 0。
 
-最终构建上的实际操作结果：在 `3.531 s` 落锤为“命中”；点击“再试一次”后，在 `1.405 s` 落锤为“偏早”；在 `4.195 s` 落锤为“偏晚”；未操作至 `6.000 s` 自动显示“偏晚”。初始界面及结果截图、Godot 日志、Chromium console JSON 与自测摘要保存在本地工作区仓库外的 `/workspace/game-design-wiki-evidence/`；原始证据未纳入本轮文档同步，结果摘要已记载于本文件。
+最终构建上的实际操作结果：在 `3.531 s` 落锤为“命中”；点击“再试一次”后，在 `1.405 s` 落锤为“偏早”；在 `4.195 s` 落锤为“偏晚”；未操作至 `6.000 s` 自动显示“偏晚”。初始界面及结果截图、Godot 日志、Chromium console JSON 与自测摘要保存在本地工作区仓库外的 `/workspace/game-design-wiki-evidence/`；原始证据未纳入文档同步，结果摘要已记载于本文件。
 
 **仅用于本次测试的集中临时参数：** 总时长 `6.0 s`，命中窗口为 `40%–60%`，即 `2.4–3.6 s`（含边界）；窗口前为“偏早”，窗口内为“命中”，窗口后或超时未操作为“偏晚”。这些是可调测试假设，不是最终平衡值或设计定案，集中定义在 `scripts/forge_trial.gd`。
 
@@ -45,18 +49,27 @@ Godot `4.7.2.stable.official.ed1daf0bf` Headless Editor 导入、主场景运行
 
 Chris 于 2026-11-17 12:59（香港时间）批准仅为 T2-01 当前 UI 加入必要的最小中文字体子集。Godot 官方字体文档指出 `SystemFont` 并不适用于 Web 导出，故以随包字体字形保证 Chromium 中的中文可读性；参见 [Godot 字体使用文档](https://docs.godotengine.org/en/stable/tutorials/ui/gui_using_fonts.html) 与 [SystemFont 类文档](https://docs.godotengine.org/en/4.5/classes/class_systemfont.html)。
 
-字体取自 Debian `fonts-noto-cjk` `1:20230817+repack1-3` 的 Noto Sans CJK SC Regular（TTC face 2），上游为 [notofonts/noto-cjk](https://github.com/notofonts/noto-cjk)，按 SIL OFL 1.1 修改并分发；内部字体名改为 `T2-01 UI CJK Subset`。当前 UI 所需的 148 个字符均有字形。来源、版权和完整许可文本位于本地工作副本的 `assets/fonts/LICENSE-Noto-CJK-OFL-1.1.txt`，不在本轮文档同步范围内；该例外只适用于本任务，不扩展到其他 UI、任务、正式美术或运行时依赖。
+字体取自 Debian `fonts-noto-cjk` `1:20230817+repack1-3` 的 Noto Sans CJK SC Regular（TTC face 2），上游为 [notofonts/noto-cjk](https://github.com/notofonts/noto-cjk)，按 SIL OFL 1.1 修改并分发；内部字体名改为 `T2-01 UI CJK Subset`。T2-01 当时所需的 148 个 UI 字符均有字形。来源、版权和完整许可文本位于本地工作副本 `assets/fonts/LICENSE-Noto-CJK-OFL-1.1.txt`；字体与许可文件未纳入本轮文档同步。
 
-| 体积检查 | 结果 |
+| T2-01 体积检查 | 结果 |
 | --- | ---: |
 | 字体 WOFF2 子集 | 25,128 B |
 | OFL 许可文件 | 4,830 B；已确认随 Web PCK 打包 |
 | 加字体前基线 PCK | 10,204 B |
-| 最终 Web PCK | 41,492 B |
+| T2-01 Web PCK | 41,492 B |
 | PCK 净增 | 31,288 B（含字体、许可文本和资源索引开销） |
+
+### T2-02：派遣简报与出发确认
+
+- **状态：** Dev 于 `2026-11-18 01:57`（香港时间）回报尚未开始改动、无阻塞，并向主策报告 ETA `2026-11-18 07:30`；于 `02:10` 提前完成本地实现与自测。独立 QA 于 `02:11` 建议局部验收通过；等待主策局部评审。无提交、推送或发布；Chris 不单独查看 T2-02 预览。
+- **字体范围：** Chris 于 `2026-11-18 02:00` 明确批准仅补入派遣简报与出发确认实际所需的缺失汉字，并使用现有 T2-01 字体；许可不扩至其他 UI、任务或正式美术。字体子集从 198 个 cmap 码点扩至 268 个；WOFF2 从 `25,128 B` 增至 `59,780 B`。
+- **实现范围：** 锻造结果后可进入简报；页面对应显示阿禾、折锋谷和当前真实结果标签，公开提示高风险路线损失及较安全路线可避免的损失；确认前可返回锻造，确认后显示“阿禾已出发”和清楚标注的后续占位。未实现节点、路线分支、结算、重铸、经济或其他系统；AC-02 与完整核心循环仍未验收。
+- **Godot 与 Web 验证：** Godot `4.7.2.stable.official.ed1daf0bf` Headless Editor 导入、headless 主场景运行及 Web Debug 导出通过。导出 PCK 为 `81,396 B`，相较 T2-01 Web 基线 `41,492 B` 增加 `39,904 B`（含字体与资源索引开销）。
+- **Chromium 局部自测：** Chrome `155.0.8059.39`，Godot WebGL 2.0，`1280×800`；实测命中结果（`2.811 s`）进入简报、确认前返回并保留结果、再次确认后显示派遣状态。console 错误、未捕获异常与失败请求均为 `0`；截图采集期间有 WebGL `ReadPixels` 性能警告，详见本地证据。QA 注意：本次浏览器完整流程只实测“命中”标签；“偏早／偏晚”通过共享动态结果变量传入简报，未分别运行整条简报流程。
+- **证据与文件边界：** 自测摘要、步骤、截图、Godot 日志、Chromium console JSON、Playwright 脚本和字集列表保存在本地工作区外的 `/workspace/game-design-wiki-evidence/T2-02/`，未纳入本轮文档同步；关键结果已记载于本节。代码、字体资源及原始证据仍未提交或推送。
 
 ### 工作区状态与下一检查点
 
-`git diff --check` 通过。原型代码与字体资源保持未提交、未推送或发布；本轮仅同步项目文档。工作区改动涉及 `PROGRESS.md`、`ACCEPTANCE.md`、`docs/task-cards/T2-01-single-strike-forging.md`、`export_presets.cfg`、`scenes/main.tscn`、`scripts/forge_trial.gd` 及其 `.uid`、`assets/fonts/` 中的 WOFF2 子集、Godot 导入设置和 OFL 许可文件。文档同步不包含代码、字体二进制、许可文件、导出目录 `build/`、导入缓存 `.godot/` 或仓库外原始证据。
+`git diff --check` 通过。T2-01／T2-02 原型代码与字体资源保持未提交、未推送或发布；本轮同步仅涉及 `README.md`、`PROGRESS.md`、`ACCEPTANCE.md`、T2-01／T2-02 任务卡和 `history/2026-11-18.md`。同步不包含 `export_presets.cfg`、`scenes/main.tscn`、`scripts/forge_trial.gd`、`assets/fonts/` 字体二进制与许可证、导出目录 `build/`、导入缓存 `.godot/` 或仓库外原始证据。
 
-原 ETA `2026-11-16 23:30`（香港时间）已逾期；收到字体许可后更新的 ETA 为 `2026-11-17 15:30`，本次本地自测和最终复验已于 `2026-11-17 13:15` 提前完成。当前技术阻塞：无。按任务卡的下一检查点为主策评审；T2-01 仅表示单次锻造本地原型自测完成，不代表完整 AC-01、完整核心循环或 Chris 对首个可玩版本的验收。Playwright E2E 未运行，仍由 QA 后续单独验证。
+T2-01 原 ETA `2026-11-16 23:30`（香港时间）已逾期；收到字体许可后更新的 ETA 为 `2026-11-17 15:30`，Dev 于 `2026-11-17 13:15` 提前完成本地自测。QA 已于 `2026-11-18 01:53`（香港时间）完成局部验收；边界仅经代码审阅，未做毫秒级黑盒点击。T2-02 本地实现和局部 QA 建议通过，待主策评审；该任务完整简报流程只测过“命中”标签。剩余核心循环任务卡尚未定义，因此完整核心循环 ETA 暂不可承诺；下一检查点为定义并排期剩余核心循环任务卡。T2-01／T2-02 局部原型均不代表完整 AC-01、AC-02、完整核心循环或 Chris 对首个可玩版本的验收；完整 Playwright 核心流程 E2E 未通过或未执行。
