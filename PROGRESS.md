@@ -134,5 +134,14 @@ T2-01 Dev 于 `2026-11-17 13:15` 完成本地自测，QA 局部验收通过；�
 - **证据与限制：** 完整证据位于仓库外 `/workspace/t2-07-evidence/`，包括 Godot 日志、Web 导出、结构化状态结果、Playwright 脚本／JSON 与截图。Linux headless Chromium 缺少中文字形，截图显示方框；未扩字体。截图引发 WebGL `GPU stall due to ReadPixels` 性能警告（非 console error）。未测移动视口、真实 GPU、浏览器矩阵或完整核心循环 E2E；相关 AC 未宣称通过。
 - **QA 签收阻塞与项目级最小修复：** Godot 4.7.2 Web EngineConfig 默认 `persistentPaths: ['/userfs']`；`persistentPaths` 是 EngineConfig 运行时接口，导出 JS 中标记 `@ignore`、常规文档未列出，不是导出预设面板属性。Godot 4.7.2 Web shell 暴露 `$GODOT_CONFIG`，项目新增自有 `html/custom_html_shell.html`，在 `new Engine(GODOT_CONFIG)` 前设置 `GODOT_CONFIG.persistentPaths = []`；`export_presets.cfg` 的 `html/custom_html_shell` 指向 `res://html/custom_html_shell.html`。只改项目级 shell／导出配置，不动共享模板或 `scripts/forge_trial.gd` 路线运行时代码。Godot 4.7.2 Headless 导入和 Web Debug 重导出通过；输出到仓库 `build/web/index.html` 及配套 JS／PCK／WASM，导出 HTML 验证空数组覆写位于 Engine 创建之前且无残留占位符。
 - **扩展 IndexedDB／Web Storage 审计：** `/workspace/t2-07-evidence/browser-flow-storage-audit.py` 在游戏脚本执行前包装 IDBFactory `open`／`deleteDatabase`、IDBObjectStore 与 IDBIndex 读写／游标方法、IDBCursor 游标操作及 local/sessionStorage 读写；在新局启动、04 确认后、刷新后三个检查点分别记录。三个阶段 IndexedDB 方法事件均为 `0`，DevTools 数据库清单为空；localStorage／sessionStorage 均为 `0` 项且无写入或变更事件。04 读取 `[high_risk, safer, safer]`／`failed_route`，确认后状态正确；刷新回锻造初始态且刷新后无 T2-07 路线日志。Console errors、页面异常、失败请求均为 `0`；仅截图产生 WebGL `ReadPixels` 性能警告。结构化结果及日志为 `/workspace/t2-07-evidence/browser-flow-storage-audit.json` 与 `browser-flow-storage-audit-run.log`，重新导出日志为 `web-export-configured.log`。
-- **下一检查点：** T2-07 的存储硬门禁已由 QA 于 `2026-11-22 01:49` 独立复核关闭；无需等待原定 `02:30` 检查。阶段 2 整体仍未通过。接下来评审 T2-08 结果／损失结算草稿，安全路线是否独立结算仍待 Chris 决策；失败后重铸与完整 Playwright E2E 仍需另拆任务。Chris 只在完整可玩版本后试玩。
+- **下一检查点：** T2-07 的存储硬门禁已由 QA 于 `2026-11-22 01:49` 独立复核关闭。Chris 于 `2026-11-23` 批准 T2-08 仅对“失败路线”结算；全程较安全只说明避开本次指定失败及其损失，不称“成功”、不加奖励。T2-08 仍未分配／未开工，待主策复核卡片、Dev 只读回报状态／阻塞／香港时间 ETA／检查点，并由 Chris 确认 ETA 后再开工。失败后重铸与完整 Playwright E2E 仍需另拆任务；阶段 2 整体未通过，Chris 只在完整可玩版本后试玩。
 - **任务卡：** [T2-07 折锋关第四节点路线选择与确认](docs/task-cards/T2-07-fourth-node-return.md)
+
+
+### T2-08：结果与损失结算
+
+- **Chris 已批准范围（2026-11-23）：** 只对“失败路线”执行结果／损失结算。四个节点均确认较安全时，只说明避开本次指定失败及其损失；不称“成功”、不加奖励、不增加其他后果。该决定不修改 GDD／AC 的已批准边界。
+- **依赖与单一维度：** 依赖已通过局部验收的 T2-07，并读取同一 `Main` 实例中完整、已确认的四节点状态；本卡只做路线确认后的结果／损失结算。不含返程／交接、重铸、资源扣除或 Demo 结束。
+- **状态与 ETA 门禁：** T2-08 仍为草稿，未分配 Dev、未开始实现；Dev 尚未回报状态／阻塞／香港时间 ETA／自测检查点，故未通过 ETA 门禁。Chris 确认 Dev ETA 前不得开工。
+- **下一检查点：** 主策复核任务卡后，等待 Dev 只读回报状态、阻塞、估算及下一检查点；再由 Chris 确认 ETA 并决定是否开工。
+- **验收边界：** 后续局部证据须覆盖四个节点分别出现高风险后的失败结算、只显示已批准的剑折断与阿禾轻伤返庄；全程较安全路线只呈现避开指定失败／损失。局部通过不等于 AC-04／AC-05／AC-07 或完整核心循环通过。
