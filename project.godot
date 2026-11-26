@@ -1,11 +1,14 @@
 ; Engine configuration file.
-; The project intentionally keeps default window adaptation and input settings.
 config_version=5
 
 [application]
 
 config/name="选择成就真我 - Web Demo"
 run/main_scene="res://scenes/main.tscn"
+
+[display]
+
+window/dpi/allow_hidpi=false
 
 [rendering]
 

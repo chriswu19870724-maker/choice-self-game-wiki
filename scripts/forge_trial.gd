@@ -28,6 +28,9 @@ var strike_button: Button
 var retry_button: Button
 var dispatch_button: Button
 var forge_page: VBoxContainer
+var forge_title: Label
+var page_center: CenterContainer
+var responsive_rows: Array[BoxContainer] = []
 var dispatch_page: VBoxContainer
 var departure_page: VBoxContainer
 var current_result_name := ""
@@ -83,6 +86,9 @@ var t2_08_settlement_reason_label: Label
 var t2_08_settlement_losses_label: Label
 
 enum NodeRoute { NONE, HIGH_RISK, SAFER }
+enum ForgePhase { INITIAL, REFORGE, COMPLETE }
+
+var forge_phase: ForgePhase = ForgePhase.INITIAL
 
 
 class ExpeditionRunState extends RefCounted:
@@ -199,7 +205,7 @@ func _process(delta: float) -> void:
 	elapsed_seconds = minf(elapsed_seconds + delta, ATTEMPT_DURATION_SECONDS)
 	_update_timing_display()
 	if elapsed_seconds >= ATTEMPT_DURATION_SECONDS:
-		_resolve_result("偏晚", "计时结束仍未落锤，本次记为偏晚。", COLOR_LATE)
+		_resolve_result("偏晚", "计时结束仍未落锤，本次记为偏晚。", COLOR_LATE, false)
 
 
 func _build_interface() -> void:
@@ -209,24 +215,38 @@ func _build_interface() -> void:
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
 
-	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(center)
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_left = 12
+	scroll.offset_right = -12
+	scroll.offset_top = 12
+	scroll.offset_bottom = -12
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.scroll_deadzone = 10
+	scroll.follow_focus = true
+	add_child(scroll)
+
+	page_center = CenterContainer.new()
+	page_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	page_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var demo_theme := Theme.new()
+	demo_theme.default_font = load("res://assets/fonts/internal-demo-zh.otf") as Font
+	demo_theme.default_font_size = 16
+	page_center.theme = demo_theme
+	scroll.add_child(page_center)
 
 	var page := VBoxContainer.new()
 	forge_page = page
 	page.custom_minimum_size = Vector2(820, 0)
 	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	page.add_theme_constant_override("separation", 14)
-	center.add_child(page)
+	page_center.add_child(page)
 
-	var eyebrow := _make_label("T2-01  /  锻造时机试作", 14, COLOR_ACCENT)
+	var eyebrow := _make_label("铸剑山庄", 14, COLOR_ACCENT)
 	page.add_child(eyebrow)
 
-	var title := _make_label("单次落锤", 36, COLOR_TEXT)
-	page.add_child(title)
+	forge_title = _make_label("单次落锤", 36, COLOR_TEXT)
+	page.add_child(forge_title)
 
 	var intro := _make_label("观察移动标记，在高亮窗口内主动落锤一次。结果只依据可见时机。", 16, COLOR_MUTED)
 	page.add_child(intro)
@@ -267,6 +287,8 @@ func _build_interface() -> void:
 	legend.add_child(_make_label("偏早：窗口前", 13, COLOR_EARLY))
 	legend.add_child(_make_label("命中：高亮区", 13, COLOR_HIT))
 	legend.add_child(_make_label("偏晚：窗口后", 13, COLOR_LATE))
+	for item in legend.get_children():
+		item.autowrap_mode = TextServer.AUTOWRAP_OFF
 
 	strike_button = Button.new()
 	strike_button.text = "落锤（本轮一次）"
@@ -323,14 +345,37 @@ func _build_interface() -> void:
 	dispatch_button.visible = false
 	content.add_child(dispatch_button)
 
-	var footer := _make_label("本页仅验证时机与反馈；不记录剑属性，也不连接其他玩法。", 12, Color("#7f8b97"))
-	page.add_child(footer)
-	_build_dispatch_pages(center)
+	_build_dispatch_pages(page_center)
+	page_center.mouse_filter = Control.MOUSE_FILTER_PASS
+	for container in page_center.find_children("*", "Container", true, false):
+		container.mouse_filter = Control.MOUSE_FILTER_PASS
+	for screen in page_center.get_children():
+		screen.visibility_changed.connect(func():
+			if screen.visible:
+				scroll.set_deferred("scroll_vertical", 0)
+		)
+	get_viewport().size_changed.connect(_adapt_layout)
+	_adapt_layout()
+
+
+func _make_responsive_row() -> BoxContainer:
+	var row := BoxContainer.new()
+	responsive_rows.append(row)
+	return row
+
+
+func _adapt_layout() -> void:
+	var available_width := get_viewport_rect().size.x
+	for screen in page_center.get_children():
+		screen.custom_minimum_size.x = clampf(available_width - 44, 0, 820)
+	for row in responsive_rows:
+		row.vertical = available_width < 600
 
 
 func _make_label(text_value: String, font_size: int, font_color: Color) -> Label:
 	var label := Label.new()
 	label.text = text_value
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", font_color)
 	return label
@@ -370,25 +415,34 @@ func _on_strike_pressed() -> void:
 		result_name = "命中"
 		result_description = "落锤发生在高亮窗口内，本次记为命中。"
 		result_color = COLOR_HIT
-	_resolve_result(result_name, result_description, result_color)
+	_resolve_result(result_name, result_description, result_color, true)
 
 
-func _resolve_result(result_name: String, result_description: String, result_color: Color) -> void:
+func _resolve_result(result_name: String, result_description: String, result_color: Color, struck: bool) -> void:
 	attempt_active = false
 	current_result_name = result_name
 	strike_button.disabled = true
-	strike_button.text = "本轮已落锤"
+	strike_button.text = "本轮已落锤" if struck else "本轮已结束"
 	retry_button.visible = true
-	dispatch_button.visible = true
+	dispatch_button.visible = forge_phase == ForgePhase.INITIAL and struck
 	state_label.text = "结果：" + result_name
 	state_label.add_theme_color_override("font_color", result_color)
 	result_detail_label.text = result_description + " 可点击“再试一次”重新开始。"
 	result_detail_label.add_theme_color_override("font_color", COLOR_TEXT)
 	result_panel.add_theme_stylebox_override("panel", _make_panel_style(Color("#202a34"), result_color, 2, 10))
 	print("[T2-01] result=%s elapsed=%.3f s" % [result_name, elapsed_seconds])
+	if forge_phase == ForgePhase.REFORGE and struck:
+		forge_phase = ForgePhase.COMPLETE
+		forge_title.text = "Demo 结束"
+		state_label.text = "新剑已铸成：" + result_name
+		result_detail_label.text = result_description + " 刷新页面可以重新体验。"
+		retry_button.hide()
+		print("[T2-09] reforge=complete result=%s" % result_name)
 
 
 func _reset_attempt() -> void:
+	if forge_phase == ForgePhase.COMPLETE:
+		return
 	elapsed_seconds = 0.0
 	attempt_active = true
 	current_result_name = ""
@@ -408,6 +462,17 @@ func _reset_attempt() -> void:
 	if is_instance_valid(result_panel):
 		result_panel.add_theme_stylebox_override("panel", _make_panel_style(Color("#202a34"), COLOR_PANEL_BORDER, 1, 10))
 	_update_timing_display()
+
+
+func _start_reforge() -> void:
+	if forge_phase != ForgePhase.INITIAL or not t2_08_settlement_panel.is_visible_in_tree():
+		return
+	forge_phase = ForgePhase.REFORGE
+	fourth_node_result_page.hide()
+	forge_title.text = "重铸新剑"
+	forge_page.show()
+	_reset_attempt()
+	print("[T2-09] reforge=started")
 
 
 func _build_dispatch_pages(center: CenterContainer) -> void:
@@ -444,7 +509,7 @@ func _build_dispatch_pages(center: CenterContainer) -> void:
 	summary_content.add_child(result_note)
 
 	dispatch_page.add_child(_make_cumulative_risk_notice())
-	var risk_row := HBoxContainer.new()
+	var risk_row := _make_responsive_row()
 	risk_row.add_theme_constant_override("separation", 12)
 	dispatch_page.add_child(risk_row)
 	risk_row.add_child(_make_dispatch_risk_card(
@@ -518,7 +583,7 @@ func _build_dispatch_pages(center: CenterContainer) -> void:
 	node_page.add_child(_make_label("路线选择", 20, COLOR_ACCENT))
 	node_page.add_child(_make_cumulative_risk_notice())
 
-	var route_row := HBoxContainer.new()
+	var route_row := _make_responsive_row()
 	route_row.add_theme_constant_override("separation", 12)
 	node_page.add_child(route_row)
 	route_row.add_child(_make_node_route_card(
@@ -587,24 +652,18 @@ func _build_dispatch_pages(center: CenterContainer) -> void:
 
 
 func _build_second_node_pages(center: CenterContainer) -> void:
-	var ui_theme := Theme.new()
-	var ui_font := load("res://assets/fonts/t2-01-ui-cjk-subset.woff2") as Font
-	ui_theme.default_font = ui_font
-	ui_theme.default_font_size = 16
-
 	second_node_page = VBoxContainer.new()
 	second_node_page.custom_minimum_size = Vector2(820, 0)
 	second_node_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	second_node_page.add_theme_constant_override("separation", 14)
 	second_node_page.visible = false
-	second_node_page.theme = ui_theme
 	center.add_child(second_node_page)
 	second_node_page.add_child(_make_label("02", 36, COLOR_TEXT))
 	second_node_page.add_child(_make_label("路线选择", 20, COLOR_ACCENT))
 	second_node_page.add_child(_make_label("折锋谷历练：01之后是02。", 16, COLOR_MUTED))
 	second_node_page.add_child(_make_cumulative_risk_notice())
 
-	var second_route_row := HBoxContainer.new()
+	var second_route_row := _make_responsive_row()
 	second_route_row.add_theme_constant_override("separation", 12)
 	second_node_page.add_child(second_route_row)
 	second_route_row.add_child(_make_node_route_card(
@@ -655,7 +714,6 @@ func _build_second_node_pages(center: CenterContainer) -> void:
 	second_node_result_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	second_node_result_page.add_theme_constant_override("separation", 14)
 	second_node_result_page.visible = false
-	second_node_result_page.theme = ui_theme
 	center.add_child(second_node_result_page)
 	second_confirmed_route_label = _make_label("已选择路线：", 22, COLOR_HIT)
 	second_node_result_page.add_child(second_confirmed_route_label)
@@ -668,7 +726,7 @@ func _build_second_node_pages(center: CenterContainer) -> void:
 	for margin_name in ["top", "bottom"]:
 		second_placeholder_margin.add_theme_constant_override("margin_" + margin_name, 18)
 	second_placeholder_panel.add_child(second_placeholder_margin)
-	var second_placeholder := _make_label("后续节点尚未实现。", 16, COLOR_MUTED)
+	var second_placeholder := _make_label("路线已确认。下一站是焦石坡。", 16, COLOR_MUTED)
 	second_placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	second_placeholder_margin.add_child(second_placeholder)
 
@@ -686,7 +744,7 @@ func _build_second_node_pages(center: CenterContainer) -> void:
 
 
 func _build_third_node_pages(center: CenterContainer) -> void:
-	# T2-05 is 焦石坡; the runtime heading remains "03". These sibling pages intentionally use the engine's default font.
+	# T2-05 is 焦石坡; the runtime heading remains "03".
 	third_node_page = VBoxContainer.new()
 	third_node_page.custom_minimum_size = Vector2(820, 0)
 	third_node_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -699,7 +757,7 @@ func _build_third_node_pages(center: CenterContainer) -> void:
 	third_node_page.add_child(_make_label("路线选择", 20, COLOR_ACCENT))
 	third_node_page.add_child(_make_cumulative_risk_notice())
 
-	var third_route_row := HBoxContainer.new()
+	var third_route_row := _make_responsive_row()
 	third_route_row.add_theme_constant_override("separation", 12)
 	third_node_page.add_child(third_route_row)
 	third_route_row.add_child(_make_third_node_route_card(
@@ -760,7 +818,7 @@ func _build_third_node_pages(center: CenterContainer) -> void:
 	for margin_name in ["top", "bottom"]:
 		third_placeholder_margin.add_theme_constant_override("margin_" + margin_name, 18)
 	third_placeholder_panel.add_child(third_placeholder_margin)
-	var third_placeholder := _make_label("后续节点尚未实现。本页只记录路线选择；未执行结果、损失或结算。", 16, COLOR_MUTED)
+	var third_placeholder := _make_label("路线已确认。继续前往折锋关，历练结果将在那里揭晓。", 16, COLOR_MUTED)
 	third_placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	third_placeholder_margin.add_child(third_placeholder)
 
@@ -788,20 +846,13 @@ func _build_fourth_node_pages(center: CenterContainer) -> void:
 	fourth_node_page.add_child(_make_label("04  /  第四个历练节点", 32, COLOR_TEXT))
 	fourth_node_page.add_child(_make_label("折锋谷历练的最后一个节点；出发简报不计入四个节点。", 15, COLOR_MUTED))
 	fourth_node_page.add_child(_make_cumulative_risk_notice())
-	var final_rule := _make_label(
-		"按公开规则，若任一节点已确认高风险，本次历练将在折锋关按规则失败；只有四节点全程确认较安全，才能避开这次失败及其损失。现在只确认路线，失败与损失尚未结算。",
-		15,
-		COLOR_TEXT
-	)
-	final_rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	fourth_node_page.add_child(final_rule)
 	fourth_prior_routes_label = _make_label("前三节点已确认路线：", 14, COLOR_MUTED)
 	fourth_prior_routes_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	fourth_node_page.add_child(fourth_prior_routes_label)
 	fourth_preconfirm_state_label = _make_label("当前权威状态：未定", 16, COLOR_ACCENT)
 	fourth_node_page.add_child(fourth_preconfirm_state_label)
 
-	var route_row := HBoxContainer.new()
+	var route_row := _make_responsive_row()
 	route_row.add_theme_constant_override("separation", 12)
 	fourth_node_page.add_child(route_row)
 	route_row.add_child(_make_fourth_node_route_card(
@@ -880,6 +931,17 @@ func _build_fourth_node_pages(center: CenterContainer) -> void:
 	t2_08_settlement_losses_label = _make_label("", 17, COLOR_TEXT)
 	t2_08_settlement_losses_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	settlement_content.add_child(t2_08_settlement_losses_label)
+	var reforge_button := Button.new()
+	reforge_button.name = "ReforgeButton"
+	reforge_button.text = "回山庄重铸"
+	reforge_button.custom_minimum_size.y = 52
+	reforge_button.add_theme_font_size_override("font_size", 18)
+	reforge_button.add_theme_color_override("font_color", Color("#18211e"))
+	reforge_button.add_theme_color_override("font_hover_color", Color("#18211e"))
+	reforge_button.add_theme_stylebox_override("normal", _make_panel_style(COLOR_ACCENT, COLOR_ACCENT, 1, 12))
+	reforge_button.add_theme_stylebox_override("hover", _make_panel_style(Color("#f0c982"), Color("#f0c982"), 1, 12))
+	reforge_button.pressed.connect(_start_reforge)
+	settlement_content.add_child(reforge_button)
 
 
 func _make_fourth_node_route_card(title_text: String, body_text: String, route_id: int, accent_color: Color) -> PanelContainer:
@@ -997,8 +1059,6 @@ func _make_cumulative_risk_notice() -> PanelContainer:
 	notice.name = "T2_06_RiskDisclosure"
 	notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	notice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# This compatibility text must not inherit or load the T2-04-only font.
-	notice.add_theme_font_override("font", ThemeDB.fallback_font)
 	margin.add_child(notice)
 	return card
 
